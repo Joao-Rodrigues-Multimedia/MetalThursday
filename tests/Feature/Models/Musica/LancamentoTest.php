@@ -7,6 +7,7 @@ namespace Tests\Feature\Models\Musica;
 use App\Enumeracoes\TipoLancamento;
 use App\Models\Musica\Artista;
 use App\Models\Musica\Lancamento;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -225,5 +226,52 @@ final class LancamentoTest extends TestCase
                 $segundoArtista->getKey(),
             ),
         );
+    }
+
+    /**
+     * Confirma que um lançamento pode identificar uma edição concreta do Discogs.
+     *
+     * @since 2.0.0
+     */
+    #[Test]
+    public function associa_edicao_concreta_do_discogs(): void
+    {
+        $lancamento = Lancamento::factory()
+            ->create([
+                'discogs_release_id' => 123456,
+            ]);
+
+        self::assertSame(
+            123456,
+            $lancamento->discogs_release_id,
+        );
+
+        self::assertSame(
+            'https://www.discogs.com/release/123456',
+            $lancamento->url_discogs,
+        );
+    }
+
+    /**
+     * Confirma que a mesma edição Discogs não pode identificar dois lançamentos.
+     *
+     * @since 2.0.0
+     */
+    #[Test]
+    public function nao_permite_repetir_edicao_do_discogs(): void
+    {
+        Lancamento::factory()
+            ->create([
+                'discogs_release_id' => 123456,
+            ]);
+
+        $this->expectException(
+            QueryException::class,
+        );
+
+        Lancamento::factory()
+            ->create([
+                'discogs_release_id' => 123456,
+            ]);
     }
 }

@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $lancamento_id
  * @property int $musica_id
+ * @property string|null $posicao
+ * @property int|null $ordem
  * @property CarbonInterface|null $created_at
  * @property CarbonInterface|null $updated_at
  * @property-read Lancamento $lancamento
@@ -50,6 +52,8 @@ class FaixaLancamento extends Model
     protected $fillable = [
         'lancamento_id',
         'musica_id',
+        'posicao',
+        'ordem',
     ];
 
     /**
@@ -64,6 +68,7 @@ class FaixaLancamento extends Model
         return [
             'lancamento_id' => 'integer',
             'musica_id' => 'integer',
+            'ordem' => 'integer',
         ];
     }
 

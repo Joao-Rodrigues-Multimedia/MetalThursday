@@ -8,6 +8,7 @@ use App\Enumeracoes\TipoLancamento;
 use App\Traits\Auditoria\RegistaAutoria;
 use Carbon\CarbonInterface;
 use Database\Factories\Musica\LancamentoFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $id
  * @property string $titulo
  * @property TipoLancamento|null $tipo
+ * @property int|null $discogs_release_id
  * @property int|null $criado_por_id
  * @property int|null $atualizado_por_id
  * @property CarbonInterface|null $created_at
@@ -31,6 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonInterface|null $deleted_at
  * @property-read Collection<int, Artista> $artistas
  * @property-read Collection<int, FaixaLancamento> $faixas
+ * @property-read string|null $url_discogs
  *
  * @since 2.0.0
  */
@@ -76,6 +79,7 @@ class Lancamento extends Model
     protected $fillable = [
         'titulo',
         'tipo',
+        'discogs_release_id',
     ];
 
     /**
@@ -89,6 +93,7 @@ class Lancamento extends Model
     {
         return [
             'tipo' => TipoLancamento::class,
+            'discogs_release_id' => 'integer',
             'criado_por_id' => 'integer',
             'atualizado_por_id' => 'integer',
         ];
@@ -124,7 +129,10 @@ class Lancamento extends Model
     }
 
     /**
-     * Obtém as faixas pertencentes ao lançamento.
+     * Obtém as faixas pertencentes ao lançamento pela ordem da tracklist.
+     *
+     * As faixas sem ordem conhecida são apresentadas depois das faixas cuja
+     * posição na tracklist é conhecida.
      *
      * @return HasMany<FaixaLancamento, $this> Relação com as faixas.
      *
@@ -132,9 +140,48 @@ class Lancamento extends Model
      */
     public function faixas(): HasMany
     {
-        return $this->hasMany(
-            FaixaLancamento::class,
-            'lancamento_id',
+        return $this
+            ->hasMany(
+                FaixaLancamento::class,
+                'lancamento_id',
+            )
+            ->orderByRaw(
+                'ordem IS NULL',
+            )
+            ->orderBy(
+                'ordem',
+            )
+            ->orderBy(
+                'id',
+            );
+    }
+
+    /**
+     * Obtém o endereço público da edição associada no Discogs.
+     *
+     * @return Attribute<string|null, never> Endereço público ou nulo.
+     *
+     * @since 2.0.0
+     */
+    protected function urlDiscogs(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                $identificador =
+                    $this->getAttributeFromArray(
+                        'discogs_release_id',
+                    );
+
+                if (
+                    ! is_numeric($identificador)
+                    || (int) $identificador < 1
+                ) {
+                    return null;
+                }
+
+                return 'https://www.discogs.com/release/'
+                    .(int) $identificador;
+            },
         );
     }
 }

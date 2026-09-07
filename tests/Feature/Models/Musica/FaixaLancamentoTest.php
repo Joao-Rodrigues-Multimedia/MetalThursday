@@ -334,4 +334,167 @@ final class FaixaLancamentoTest extends TestCase
                 ),
         );
     }
+
+    /**
+     * Confirma que uma faixa preserva a posição e a ordem da edição concreta.
+     *
+     * A posição mantém o valor textual fornecido pela fonte externa, enquanto a
+     * ordem representa a sequência efectiva da faixa na tracklist.
+     *
+     * @since 2.0.0
+     */
+    #[Test]
+    public function preserva_posicao_e_ordem_da_tracklist(): void
+    {
+        $lancamento = Lancamento::factory()
+            ->create();
+
+        $musica = Musica::factory()
+            ->create();
+
+        $faixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $musica->getKey(),
+                'posicao' => 'CD1-12',
+                'ordem' => 12,
+            ]);
+
+        self::assertSame(
+            'CD1-12',
+            $faixa->posicao,
+        );
+
+        self::assertSame(
+            12,
+            $faixa->ordem,
+        );
+
+        self::assertDatabaseHas(
+            'faixas_lancamento',
+            [
+                'id' => $faixa->getKey(),
+                'posicao' => 'CD1-12',
+                'ordem' => 12,
+            ],
+        );
+    }
+
+    /**
+     * Confirma que um lançamento devolve as faixas pela ordem da tracklist.
+     *
+     * @since 2.0.0
+     */
+    #[Test]
+    public function lancamento_ordena_faixas_pela_ordem_da_tracklist(): void
+    {
+        $lancamento = Lancamento::factory()
+            ->create();
+
+        $primeiraMusica = Musica::factory()
+            ->create();
+
+        $segundaMusica = Musica::factory()
+            ->create();
+
+        $terceiraMusica = Musica::factory()
+            ->create();
+
+        $terceiraFaixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $terceiraMusica->getKey(),
+                'posicao' => 'A3',
+                'ordem' => 3,
+            ]);
+
+        $primeiraFaixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $primeiraMusica->getKey(),
+                'posicao' => 'A1',
+                'ordem' => 1,
+            ]);
+
+        $segundaFaixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $segundaMusica->getKey(),
+                'posicao' => 'A2',
+                'ordem' => 2,
+            ]);
+
+        self::assertSame(
+            [
+                $primeiraFaixa->getKey(),
+                $segundaFaixa->getKey(),
+                $terceiraFaixa->getKey(),
+            ],
+            $lancamento
+                ->faixas()
+                ->pluck(
+                    'id',
+                )
+                ->all(),
+        );
+    }
+
+    /**
+     * Confirma que faixas sem ordem conhecida surgem depois da tracklist ordenada.
+     *
+     * @since 2.0.0
+     */
+    #[Test]
+    public function lancamento_coloca_faixas_sem_ordem_depois_da_tracklist(): void
+    {
+        $lancamento = Lancamento::factory()
+            ->create();
+
+        $musicaSemOrdem = Musica::factory()
+            ->create();
+
+        $primeiraMusica = Musica::factory()
+            ->create();
+
+        $segundaMusica = Musica::factory()
+            ->create();
+
+        $faixaSemOrdem = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $musicaSemOrdem->getKey(),
+                'posicao' => null,
+                'ordem' => null,
+            ]);
+
+        $segundaFaixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $segundaMusica->getKey(),
+                'posicao' => 'A2',
+                'ordem' => 2,
+            ]);
+
+        $primeiraFaixa = FaixaLancamento::factory()
+            ->create([
+                'lancamento_id' => $lancamento->getKey(),
+                'musica_id' => $primeiraMusica->getKey(),
+                'posicao' => 'A1',
+                'ordem' => 1,
+            ]);
+
+        self::assertSame(
+            [
+                $primeiraFaixa->getKey(),
+                $segundaFaixa->getKey(),
+                $faixaSemOrdem->getKey(),
+            ],
+            $lancamento
+                ->faixas()
+                ->pluck(
+                    'id',
+                )
+                ->all(),
+        );
+    }
 }

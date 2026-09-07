@@ -51,7 +51,9 @@ use LogicException;
  * @property-read string|null $url_imagem
  * @property-read OrigemGeografica|null $origemGeografica
  * @property-read Collection<int, Genero> $generos
+ * @property-read Collection<int, Lancamento> $lancamentos
  * @property-read Collection<int, Ligacao> $ligacoes
+ * @property-read Collection<int, Musica> $musicas
  *
  * @since 1.0.0
  */
@@ -98,6 +100,22 @@ class Artista extends Model
      */
     private const TABELA_ARTISTA_GENERO =
         'artista_genero';
+
+    /**
+     * Nome da tabela intermédia entre artistas e lançamentos.
+     *
+     * @since 2.0.0
+     */
+    private const TABELA_ARTISTA_LANCAMENTO =
+        'artista_lancamento';
+
+    /**
+     * Nome da tabela intermédia entre artistas e músicas.
+     *
+     * @since 2.0.0
+     */
+    private const TABELA_ARTISTA_MUSICA =
+        'artista_musica';
 
     /**
      * Nome físico da tabela associada ao modelo.
@@ -632,6 +650,23 @@ class Artista extends Model
     }
 
     /**
+     * Obtém os lançamentos associados ao artista.
+     *
+     * @return BelongsToMany<Lancamento, $this> Relação com os lançamentos.
+     *
+     * @since 2.0.0
+     */
+    public function lancamentos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Lancamento::class,
+            self::TABELA_ARTISTA_LANCAMENTO,
+            'artista_id',
+            'lancamento_id',
+        );
+    }
+
+    /**
      * Obtém as ligações externas do artista pela ordem definida.
      *
      * @return MorphMany<Ligacao, $this> Relação com as ligações.
@@ -653,5 +688,22 @@ class Artista extends Model
             ->orderBy(
                 'id',
             );
+    }
+
+    /**
+     * Obtém as músicas associadas ao artista.
+     *
+     * @return BelongsToMany<Musica, $this> Relação com as músicas.
+     *
+     * @since 2.0.0
+     */
+    public function musicas(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Musica::class,
+            self::TABELA_ARTISTA_MUSICA,
+            'artista_id',
+            'musica_id',
+        );
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\MetalThursday\ControladorMetalThursday;
 use App\Http\Controllers\Musica\ControladorArtista;
 use App\Http\Controllers\Musica\ControladorGenero;
 use App\Http\Controllers\Musica\ControladorImportacaoArtista;
+use App\Http\Controllers\Musica\ControladorImportacaoLancamento;
 use App\Http\Controllers\Utilizadores\ControladorNotificacao;
 use Illuminate\Support\Facades\Route;
 
@@ -131,6 +132,44 @@ Route::middleware([
         )->name(
             'utilizadores.ha-mais-tempo-sem-nomeacao',
         );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Lançamentos
+        |--------------------------------------------------------------------------
+        */
+
+        Route::controller(
+            ControladorImportacaoLancamento::class,
+        )
+            ->prefix(
+                'lancamentos/importacao',
+            )
+            ->name(
+                'lancamentos.importacao.',
+            )
+            ->group(
+                static function (): void {
+                    Route::get(
+                        'pesquisar',
+                        'pesquisar',
+                    )->name(
+                        'pesquisar',
+                    );
+
+                    Route::post(
+                        '{identificadorDiscogs}',
+                        'importar',
+                    )
+                        ->where(
+                            'identificadorDiscogs',
+                            '[1-9][0-9]*',
+                        )
+                        ->name(
+                            'importar',
+                        );
+                },
+            );
 
         /*
         |--------------------------------------------------------------------------
